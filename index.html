@@ -459,7 +459,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🍳 My Recipe Cookbook</h1>
+            <h1>My Recipe Cookbook</h1>
             <p>Collect and organize your favorite recipes from around the web</p>
         </div>
 
@@ -472,8 +472,8 @@
             </div>
 
             <div class="helpful-tips">
-                <strong>💡 Best Recipe Sites:</strong> AllRecipes, Food Network, BBC Good Food, Tasty, Serious Eats, King Arthur Baking
-                <br><strong>⚠️ If URL fails:</strong> Try "Manual Entry" button or use a different recipe site
+                <strong>Best Recipe Sites:</strong> AllRecipes, Food Network, BBC Good Food, Tasty, Serious Eats, King Arthur Baking
+                <br><strong>If URL fails:</strong> Try "Manual Entry" button or use a different recipe site
             </div>
 
             <div class="manual-entry-form" id="manualEntryForm">
@@ -789,11 +789,11 @@
                     : '';
                 
                 let metaHtml = '';
-                if (recipe.mealType) metaHtml += '<span>🍽️ ' + escapeHtml(recipe.mealType) + '</span>';
-                if (recipe.prepTime) metaHtml += '<span>⏱️ Prep: ' + escapeHtml(recipe.prepTime) + '</span>';
-                if (recipe.cookTime) metaHtml += '<span>🔥 Cook: ' + escapeHtml(recipe.cookTime) + '</span>';
-                if (recipe.servings) metaHtml += '<span>👥 Serves: ' + escapeHtml(recipe.servings) + '</span>';
-                if (recipe.author) metaHtml += '<span>👨‍🍳 ' + escapeHtml(recipe.author) + '</span>';
+                if (recipe.mealType) metaHtml += '<span>' + escapeHtml(recipe.mealType) + '</span>';
+                if (recipe.prepTime) metaHtml += '<span>Prep: ' + escapeHtml(recipe.prepTime) + '</span>';
+                if (recipe.cookTime) metaHtml += '<span>Cook: ' + escapeHtml(recipe.cookTime) + '</span>';
+                if (recipe.servings) metaHtml += '<span>Serves: ' + escapeHtml(recipe.servings) + '</span>';
+                if (recipe.author) metaHtml += '<span>' + escapeHtml(recipe.author) + '</span>';
 
                 let descriptionHtml = '';
                 if (recipe.description) {
