@@ -206,6 +206,49 @@
             100% { transform: rotate(360deg); }
         }
 
+        .recipe-preview {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .recipe-preview h3 {
+            color: #2c5530;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .preview-content {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .preview-content h4 {
+            color: #2c5530;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .preview-meta {
+            margin-bottom: 10px;
+        }
+
+        .preview-meta span {
+            background: #f0f0f0;
+            padding: 3px 8px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
         .cookbook-section {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
@@ -532,6 +575,29 @@
                 <div class="spinner"></div>
                 <p>Extracting recipe information...</p>
             </div>
+
+            <div class="recipe-preview" id="recipePreview" style="display: none;">
+                <h3>Recipe Extracted! Please categorize:</h3>
+                <div id="previewContent"></div>
+                <div style="margin: 20px 0;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">Meal Type:</label>
+                    <select id="extractedMealType" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                        <option value="">Select meal type</option>
+                        <option value="Breakfast">Breakfast</option>
+                        <option value="Lunch">Lunch</option>
+                        <option value="Dinner">Dinner</option>
+                        <option value="Dessert">Dessert</option>
+                        <option value="Snack">Snack</option>
+                        <option value="Appetizer">Appetizer</option>
+                        <option value="Side Dish">Side Dish</option>
+                        <option value="Beverage">Beverage</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="saveExtractedRecipe()">Save Recipe</button>
+                    <button class="btn btn-secondary" onclick="cancelExtractedRecipe()">Cancel</button>
+                </div>
+            </div>
         </div>
 
         <div class="cookbook-section">
@@ -575,6 +641,7 @@
         // Global variables
         let recipes = [];
         let currentFilteredRecipes = [];
+        let extractedRecipeData = null;
 
         // UTILITY FUNCTIONS - Must be first
         function escapeHtml(text) {
@@ -645,8 +712,12 @@
         // UI FUNCTIONS
         function toggleManualEntry() {
             const form = document.getElementById('manualEntryForm');
+            const preview = document.getElementById('recipePreview');
             const isVisible = form.style.display !== 'none';
+            
+            // Hide both manual form and preview
             form.style.display = isVisible ? 'none' : 'block';
+            preview.style.display = 'none';
             
             if (!isVisible) {
                 document.getElementById('manualTitle').value = '';
@@ -658,6 +729,32 @@
                 document.getElementById('manualIngredients').value = '';
                 document.getElementById('manualInstructions').value = '';
             }
+        }
+
+        function saveExtractedRecipe() {
+            if (!extractedRecipeData) return;
+            
+            const mealType = document.getElementById('extractedMealType').value;
+            extractedRecipeData.mealType = mealType;
+            extractedRecipeData.id = Date.now().toString();
+            extractedRecipeData.dateAdded = new Date().toLocaleDateString();
+            
+            recipes.unshift(extractedRecipeData);
+            saveRecipes();
+            displayRecipes();
+            updateQuickJumpDropdown();
+            
+            // Clear and hide preview
+            document.getElementById('recipePreview').style.display = 'none';
+            document.getElementById('recipeUrl').value = '';
+            extractedRecipeData = null;
+            
+            showNotification('Recipe added successfully!');
+        }
+
+        function cancelExtractedRecipe() {
+            document.getElementById('recipePreview').style.display = 'none';
+            extractedRecipeData = null;
         }
 
         function addManualRecipe() {
@@ -789,11 +886,11 @@
                     : '';
                 
                 let metaHtml = '';
-                if (recipe.mealType) metaHtml += '<span>' + escapeHtml(recipe.mealType) + '</span>';
+                if (recipe.mealType) metaHtml += '<span>Meal: ' + escapeHtml(recipe.mealType) + '</span>';
                 if (recipe.prepTime) metaHtml += '<span>Prep: ' + escapeHtml(recipe.prepTime) + '</span>';
                 if (recipe.cookTime) metaHtml += '<span>Cook: ' + escapeHtml(recipe.cookTime) + '</span>';
                 if (recipe.servings) metaHtml += '<span>Serves: ' + escapeHtml(recipe.servings) + '</span>';
-                if (recipe.author) metaHtml += '<span>' + escapeHtml(recipe.author) + '</span>';
+                if (recipe.author) metaHtml += '<span>Author: ' + escapeHtml(recipe.author) + '</span>';
 
                 let descriptionHtml = '';
                 if (recipe.description) {
@@ -909,6 +1006,55 @@
             recipes = originalRecipes;
         }
 
+        function showRecipePreview(recipe) {
+            const preview = document.getElementById('recipePreview');
+            const content = document.getElementById('previewContent');
+            
+            let ingredientsList = '';
+            if (recipe.ingredients && recipe.ingredients.length > 0) {
+                ingredientsList = '<div><strong>Ingredients:</strong><ul style="margin: 5px 0; padding-left: 20px;">';
+                for (let i = 0; i < Math.min(recipe.ingredients.length, 5); i++) {
+                    ingredientsList += '<li>' + escapeHtml(recipe.ingredients[i]) + '</li>';
+                }
+                if (recipe.ingredients.length > 5) {
+                    ingredientsList += '<li>... and ' + (recipe.ingredients.length - 5) + ' more</li>';
+                }
+                ingredientsList += '</ul></div>';
+            }
+
+            let instructionsList = '';
+            if (recipe.instructions && recipe.instructions.length > 0) {
+                instructionsList = '<div><strong>Instructions:</strong><ol style="margin: 5px 0; padding-left: 20px;">';
+                for (let i = 0; i < Math.min(recipe.instructions.length, 3); i++) {
+                    instructionsList += '<li>' + escapeHtml(recipe.instructions[i].substring(0, 100)) + (recipe.instructions[i].length > 100 ? '...' : '') + '</li>';
+                }
+                if (recipe.instructions.length > 3) {
+                    instructionsList += '<li>... and ' + (recipe.instructions.length - 3) + ' more steps</li>';
+                }
+                instructionsList += '</ol></div>';
+            }
+
+            content.innerHTML = 
+                '<div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">' +
+                '<h4 style="color: #2c5530; margin-bottom: 10px;">' + escapeHtml(recipe.title) + '</h4>' +
+                (recipe.description ? '<p style="color: #666; margin-bottom: 10px;">' + escapeHtml(recipe.description.substring(0, 150)) + (recipe.description.length > 150 ? '...' : '') + '</p>' : '') +
+                (recipe.prepTime || recipe.cookTime || recipe.servings ? 
+                    '<div style="margin-bottom: 10px;">' +
+                    (recipe.prepTime ? '<span style="background: #f0f0f0; padding: 3px 8px; border-radius: 5px; margin-right: 10px; font-size: 12px;">Prep: ' + escapeHtml(recipe.prepTime) + '</span>' : '') +
+                    (recipe.cookTime ? '<span style="background: #f0f0f0; padding: 3px 8px; border-radius: 5px; margin-right: 10px; font-size: 12px;">Cook: ' + escapeHtml(recipe.cookTime) + '</span>' : '') +
+                    (recipe.servings ? '<span style="background: #f0f0f0; padding: 3px 8px; border-radius: 5px; font-size: 12px;">Serves: ' + escapeHtml(recipe.servings) + '</span>' : '') +
+                    '</div>' : '') +
+                ingredientsList +
+                instructionsList +
+                '</div>';
+
+            document.getElementById('extractedMealType').value = '';
+            preview.style.display = 'block';
+            
+            // Hide manual form if open
+            document.getElementById('manualEntryForm').style.display = 'none';
+        }
+
         // URL EXTRACTION FUNCTIONS (these can fail without breaking the app)
         async function addRecipe() {
             const urlInput = document.getElementById('recipeUrl');
@@ -930,16 +1076,9 @@
             try {
                 const recipe = await extractRecipeFromUrl(url);
                 if (recipe) {
-                    recipe.id = Date.now().toString();
-                    recipe.dateAdded = new Date().toLocaleDateString();
                     recipe.sourceUrl = url;
-                    
-                    recipes.unshift(recipe);
-                    saveRecipes();
-                    displayRecipes();
-                    updateQuickJumpDropdown();
-                    urlInput.value = '';
-                    showNotification('Recipe added successfully!');
+                    extractedRecipeData = recipe;
+                    showRecipePreview(recipe);
                 } else {
                     showNotification('Could not extract recipe from this URL. Try the Manual Entry button instead.', 'error');
                 }
